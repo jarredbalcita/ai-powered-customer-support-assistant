@@ -1,9 +1,15 @@
+# Mock tools — each returns (ui_type, message, data).
+# No external calls are made here; all data is static and predefined.
+
 from collections.abc import Callable
 from typing import Any
 
+# ToolResult: (ui_type string, human-readable message, data payload for the widget)
 ToolResult = tuple[str, str, dict[str, Any]]
 ToolFn = Callable[[str], ToolResult]
 
+
+# --- Single-record tools -----------------------------------------------------
 
 def tracking_tool(_msg: str) -> ToolResult:
     return "tracking_page", "Here is your order status.", {
@@ -33,6 +39,14 @@ def complaint_tool(_msg: str) -> ToolResult:
     }
 
 
+def escalation_tool(_msg: str) -> ToolResult:
+    return "escalation_page", "Your issue has been escalated to senior support.", {
+        "ticket_id": "ESC-101",
+        "assigned_to": "Senior Support",
+        "expected_response": "Within 2 hours",
+    }
+
+
 def capabilities_tool(_msg: str) -> ToolResult:
     return "text", (
         "Here's what I can help you with:\n\n"
@@ -46,43 +60,38 @@ def capabilities_tool(_msg: str) -> ToolResult:
     ), {}
 
 
-def escalation_tool(_msg: str) -> ToolResult:
-    return "escalation_page", "Your issue has been escalated to senior support.", {
-        "ticket_id": "ESC-101",
-        "assigned_to": "Senior Support",
-        "expected_response": "Within 2 hours",
-    }
-
+# --- Static data for list-based tools ----------------------------------------
 
 _HOTELS: list[dict[str, Any]] = [
-    {"name": "The Ritz-Carlton",       "price": "$540", "rating": 4.9, "location": "Downtown Dubai"},
-    {"name": "Marriott City Centre",   "price": "$280", "rating": 4.6, "location": "Business Bay"},
-    {"name": "Hilton Garden Inn",      "price": "$175", "rating": 4.3, "location": "Al Barsha"},
-    {"name": "Premier Inn",            "price": "$110", "rating": 4.1, "location": "Bur Dubai"},
-    {"name": "Holiday Inn Express",    "price": "$90",  "rating": 3.9, "location": "Deira"},
-    {"name": "Ibis Styles",            "price": "$65",  "rating": 3.7, "location": "Al Qusais"},
-    {"name": "Atlantis The Palm",      "price": "$720", "rating": 4.8, "location": "Palm Jumeirah"},
-    {"name": "Four Seasons Resort",    "price": "$610", "rating": 4.9, "location": "Jumeirah Beach"},
-    {"name": "Hyatt Regency",          "price": "$230", "rating": 4.5, "location": "Corniche"},
-    {"name": "Novotel World Trade",    "price": "$155", "rating": 4.2, "location": "Trade Centre"},
+    {"name": "The Ritz-Carlton",     "price": "$538", "rating": 4.9, "location": "Downtown Dubai"},
+    {"name": "Marriott City Centre", "price": "$263", "rating": 4.6, "location": "Business Bay"},
+    {"name": "Hilton Garden Inn",    "price": "$183", "rating": 4.3, "location": "Al Barsha"},
+    {"name": "Premier Inn",          "price": "$110", "rating": 4.1, "location": "Bur Dubai"},
+    {"name": "Holiday Inn Express",  "price": "$93",  "rating": 3.9, "location": "Deira"},
+    {"name": "Ibis Styles",          "price": "$65",  "rating": 3.7, "location": "Al Qusais"},
+    {"name": "Atlantis The Palm",    "price": "$720", "rating": 4.8, "location": "Palm Jumeirah"},
+    {"name": "Four Seasons Resort",  "price": "$598", "rating": 4.9, "location": "Jumeirah Beach"},
+    {"name": "Hyatt Regency",        "price": "$247", "rating": 4.5, "location": "Corniche"},
+    {"name": "Novotel World Trade",  "price": "$155", "rating": 4.2, "location": "Trade Centre"},
 ]
 
 
 _FLIGHTS: list[dict[str, Any]] = [
-    {"airline": "Emirates",       "from": "DXB", "to": "LHR", "price": "$520", "duration": "7h 30m",  "departure": "02:30"},
-    {"airline": "British Airways","from": "LHR", "to": "DXB", "price": "$480", "duration": "7h 15m",  "departure": "09:15"},
-    {"airline": "Etihad",         "from": "AUH", "to": "JFK", "price": "$670", "duration": "14h 10m", "departure": "08:05"},
-    {"airline": "Qatar Airways",  "from": "DOH", "to": "CDG", "price": "$390", "duration": "6h 20m",  "departure": "14:45"},
-    {"airline": "Lufthansa",      "from": "FRA", "to": "DXB", "price": "$410", "duration": "6h 45m",  "departure": "11:20"},
-    {"airline": "FlyDubai",       "from": "DXB", "to": "IST", "price": "$195", "duration": "4h 00m",  "departure": "06:50"},
-    {"airline": "Air Arabia",     "from": "SHJ", "to": "CAI", "price": "$130", "duration": "3h 10m",  "departure": "16:30"},
-    {"airline": "United Airlines", "from": "JFK", "to": "DXB", "price": "$750", "duration": "13h 50m", "departure": "22:10"},
-    {"airline": "Singapore Air",  "from": "SIN", "to": "DXB", "price": "$310", "duration": "7h 00m",  "departure": "23:55"},
+    {"airline": "Emirates",        "from": "DXB", "to": "LHR", "price": "$520", "duration": "7h 30m",  "departure": "02:30"},
+    {"airline": "British Airways", "from": "LHR", "to": "DXB", "price": "$480", "duration": "7h 15m",  "departure": "09:15"},
+    {"airline": "Etihad",          "from": "AUH", "to": "JFK", "price": "$670", "duration": "14h 10m", "departure": "08:05"},
+    {"airline": "Qatar Airways",   "from": "DOH", "to": "CDG", "price": "$390", "duration": "6h 20m",  "departure": "14:45"},
+    {"airline": "Lufthansa",       "from": "FRA", "to": "DXB", "price": "$410", "duration": "6h 45m",  "departure": "11:20"},
+    {"airline": "FlyDubai",        "from": "DXB", "to": "IST", "price": "$195", "duration": "4h 00m",  "departure": "06:50"},
+    {"airline": "Air Arabia",      "from": "SHJ", "to": "CAI", "price": "$130", "duration": "3h 10m",  "departure": "16:30"},
+    {"airline": "United Airlines", "from": "JFK", "to": "DXB", "price": "$750", "duration": "13h 45m", "departure": "22:10"},
+    {"airline": "Singapore Air",   "from": "SIN", "to": "DXB", "price": "$310", "duration": "6h 55m",  "departure": "23:55"},
     {"airline": "Turkish Airlines","from": "IST", "to": "DXB", "price": "$260", "duration": "4h 15m",  "departure": "07:40"},
 ]
 
 
 def _cheapest(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    # strip the leading $ before comparing so "$110" sorts correctly
     sorted_items = sorted(items, key=lambda x: int(str(x["price"]).strip("$")))
     return sorted_items[:3]
 
@@ -97,14 +106,13 @@ def flight_tool(msg: str) -> ToolResult:
     return "flight_page", "Available flights found.", {"flights": flights}
 
 
-# Registry mapping intent name → (tool_function_name, callable).
-# Add new intents here without touching any other file.
+# intent → (tool name, callable); extend here to add new intents
 TOOLS: dict[str, tuple[str, ToolFn]] = {
-    "order_tracking": ("tracking_tool",    tracking_tool),
-    "refund_request": ("refund_tool",      refund_tool),
-    "complaint":      ("complaint_tool",   complaint_tool),
-    "escalation":     ("escalation_tool",  escalation_tool),
-    "hotel_search":   ("hotel_tool",       hotel_tool),
-    "flight_search":  ("flight_tool",      flight_tool),
-    "capabilities":   ("capabilities_tool", capabilities_tool),
+    "order_tracking": ("tracking_tool", tracking_tool),
+    "refund_request": ("refund_tool", refund_tool),
+    "complaint": ("complaint_tool", complaint_tool),
+    "escalation": ("escalation_tool", escalation_tool),
+    "hotel_search": ("hotel_tool", hotel_tool),
+    "flight_search": ("flight_tool", flight_tool),
+    "capabilities": ("capabilities_tool", capabilities_tool),
 }
