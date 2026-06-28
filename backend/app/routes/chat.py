@@ -1,3 +1,6 @@
+# POST /chat — the single endpoint the Flutter app calls.
+# Flow: classify intent via Ollama → look up tool → run tool → return structured JSON.
+
 from fastapi import APIRouter
 
 from app.memory import update_history
@@ -13,10 +16,12 @@ async def chat(req: ChatRequest) -> ChatResponse:
     try:
         intent = await classify_intent(req.message)
     except Exception as e:
+        # Ollama unreachable or timed out — degrade gracefully
         print("classify error:", e)
         intent = ""
 
     if intent not in TOOLS:
+        # no matching tool — send a plain text fallback reply
         fallback = "Sorry, I didn't understand that. Try asking about orders, refunds, hotels, or flights."
         update_history(req.message, fallback)
         return ChatResponse(

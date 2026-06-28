@@ -307,6 +307,7 @@ class TrackingWidget extends StatelessWidget {
               _infoRow('Status', data['status']?.toString() ?? ''),
               _infoRow('ETA', data['eta']?.toString() ?? ''),
               _infoRow('Carrier', data['carrier']?.toString() ?? ''),
+              const SizedBox(height: 2),
               _infoRow('Last Location', data['last_location']?.toString() ?? ''),
             ],
           ),
@@ -320,28 +321,30 @@ class RefundWidget extends StatelessWidget {
   const RefundWidget({super.key, required this.data, required this.message});
 
   @override
-  Widget build(BuildContext context) => Card(
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                const Icon(Icons.currency_exchange, color: Colors.green),
-                const SizedBox(width: 8),
-                Text(message,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-              ]),
-              const Divider(),
-              _infoRow('Refund ID', data['refund_id']?.toString() ?? ''),
-              _infoRow('Amount', data['amount']?.toString() ?? ''),
-              _infoRow('Status', data['status']?.toString() ?? ''),
-              _infoRow('Timeline', data['estimated_days']?.toString() ?? ''),
-            ],
-          ),
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              const Icon(Icons.currency_exchange, color: Colors.green),
+              const SizedBox(width: 8),
+              Text(message,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+            ]),
+            const Divider(),
+            _infoRow('Refund ID', data['refund_id']?.toString() ?? ''),
+            _infoRow('Amount', data['amount']?.toString() ?? ''),
+            _infoRow('Status', data['status']?.toString() ?? ''),
+            _infoRow('Timeline', data['estimated_days']?.toString() ?? ''),
+          ],
         ),
-      );
+      ),
+    );
+  }
 }
 
 class ComplaintWidget extends StatelessWidget {
@@ -389,7 +392,7 @@ class EscalationWidget extends StatelessWidget {
   Widget build(BuildContext context) => Card(
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

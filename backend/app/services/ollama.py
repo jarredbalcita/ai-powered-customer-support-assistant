@@ -1,3 +1,5 @@
+# Ollama client — sends the conversation to the local LLM and extracts the intent.
+
 import json
 import re
 from typing import Any
@@ -9,6 +11,9 @@ from app.memory import MAX_TURNS, history
 OLLAMA_URL = "http://localhost:11434/api/chat"
 MODEL = "llama3.2"
 
+# The prompt constrains the model to a fixed set of intents and JSON-only output.
+# The example pairs (hotel→hotel, flight→flight) are necessary — without them
+# the model defaults to hotel_search for any "cheaper" follow-up regardless of context.
 SYSTEM_PROMPT = (
     "You are an intent classifier for a customer support assistant. "
     "Classify the user's latest message into exactly one of these intents: "
@@ -22,7 +27,7 @@ SYSTEM_PROMPT = (
 
 
 def _extract_json(text: str) -> dict[str, Any]:
-    """Parse JSON from LLM output, tolerating extra surrounding text."""
+    """Try direct parse first, fall back to regex if the model wraps JSON in prose."""
     try:
         return dict(json.loads(text.strip()))
     except (json.JSONDecodeError, ValueError):
@@ -37,10 +42,13 @@ def _extract_json(text: str) -> dict[str, Any]:
 
 
 async def classify_intent(message: str) -> str:
+    # build message list: system prompt + recent history + new user message
     messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT}]
     messages += history[-MAX_TURNS * 2:]
     messages.append({"role": "user", "content": message})
 
+    # format=json nudges the model to skip prose preambles, but some builds
+    # still wrap the JSON in a sentence, so _extract_json handles both cases
     payload: dict[str, Any] = {
         "model": MODEL,
         "messages": messages,
