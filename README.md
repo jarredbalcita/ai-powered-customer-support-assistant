@@ -127,4 +127,12 @@ All hotel and flight data lives in `backend/app/tools.py` in `_HOTELS` and `_FLI
 Order, refund, complaint, and escalation tools return a single hardcoded record each — also in `tools.py`.
 
 
-## Screenshots of application
+## Screenshots
+
+<p align="center">
+  <img src="assets/screenshot3.png" width="30%" alt="Order tracking, refund, and complaint" />
+  &nbsp;
+  <img src="assets/screenshot1.png" width="30%" alt="Hotel search with cheaper options follow-up" />
+  &nbsp;
+  <img src="assets/screenshot2.png" width="30%" alt="Issue escalation and flight listings" />
+</p>
