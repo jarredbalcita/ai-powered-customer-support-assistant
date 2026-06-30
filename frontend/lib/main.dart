@@ -267,7 +267,7 @@ class FlightWidget extends StatelessWidget {
               title: Text(flight['airline']?.toString() ?? '',
                   style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text(
-                  '${flight["from"]} → ${flight["to"]}  •  ${flight["duration"]}  •  Dep: ${flight["departure"]}'),
+                  '${flight["from"]} → ${flight["to"]}  • Dep: ${flight["departure"]} → • Arr: ${flight["arrival"]}'),
               trailing: Text(
                 flight['price']?.toString() ?? '',
                 style: const TextStyle(
