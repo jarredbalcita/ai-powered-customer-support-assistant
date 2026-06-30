@@ -1,6 +1,7 @@
 # POST /chat — the single endpoint the Flutter app calls.
 # Flow: classify intent via Ollama → look up tool → run tool → return structured JSON.
 
+import asyncio
 from fastapi import APIRouter
 
 from app.memory import update_history
@@ -30,7 +31,8 @@ async def chat(req: ChatRequest) -> ChatResponse:
         )
 
     tool_name, tool_fn = TOOLS[intent]
-    ui_type, msg, data = tool_fn(req.message)
+    result = tool_fn(req.message)
+    ui_type, msg, data = await result if asyncio.iscoroutine(result) else result
     update_history(req.message, msg)
 
     return ChatResponse(

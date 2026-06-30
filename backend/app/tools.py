@@ -1,12 +1,12 @@
 # Mock tools — each returns (ui_type, message, data).
 # No external calls are made here; all data is static and predefined.
 
-from collections.abc import Callable
-from typing import Any
+from collections.abc import Callable, Coroutine
+from typing import Any, Union
 
 # ToolResult: (ui_type string, human-readable message, data payload for the widget)
 ToolResult = tuple[str, str, dict[str, Any]]
-ToolFn = Callable[[str], ToolResult]
+ToolFn = Union[Callable[[str], ToolResult], Callable[[str], Coroutine[Any, Any, ToolResult]]]
 
 
 # --- Single-record tools -----------------------------------------------------
@@ -76,20 +76,6 @@ _HOTELS: list[dict[str, Any]] = [
 ]
 
 
-_FLIGHTS: list[dict[str, Any]] = [
-    {"airline": "Emirates",        "from": "DXB", "to": "LHR", "price": "$520", "duration": "7h 30m",  "departure": "02:30"},
-    {"airline": "British Airways", "from": "LHR", "to": "DXB", "price": "$480", "duration": "7h 15m",  "departure": "09:15"},
-    {"airline": "Etihad",          "from": "AUH", "to": "JFK", "price": "$670", "duration": "14h 10m", "departure": "08:05"},
-    {"airline": "Qatar Airways",   "from": "DOH", "to": "CDG", "price": "$390", "duration": "6h 20m",  "departure": "14:45"},
-    {"airline": "Lufthansa",       "from": "FRA", "to": "DXB", "price": "$410", "duration": "6h 45m",  "departure": "11:20"},
-    {"airline": "FlyDubai",        "from": "DXB", "to": "IST", "price": "$195", "duration": "4h 00m",  "departure": "06:50"},
-    {"airline": "Air Arabia",      "from": "SHJ", "to": "CAI", "price": "$130", "duration": "3h 10m",  "departure": "16:30"},
-    {"airline": "United Airlines", "from": "JFK", "to": "DXB", "price": "$750", "duration": "13h 45m", "departure": "22:10"},
-    {"airline": "Singapore Air",   "from": "SIN", "to": "DXB", "price": "$310", "duration": "6h 55m",  "departure": "23:55"},
-    {"airline": "Turkish Airlines","from": "IST", "to": "DXB", "price": "$260", "duration": "4h 15m",  "departure": "07:40"},
-]
-
-
 def _cheapest(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     # strip the leading $ before comparing so "$110" sorts correctly
     sorted_items = sorted(items, key=lambda x: int(str(x["price"]).strip("$")))
@@ -101,9 +87,56 @@ def hotel_tool(msg: str) -> ToolResult:
     return "hotel_page", "Available hotels found.", {"hotels": hotels}
 
 
-def flight_tool(msg: str) -> ToolResult:
-    flights = _cheapest(_FLIGHTS) if "cheap" in msg.lower() else _FLIGHTS
-    return "flight_page", "Available flights found.", {"flights": flights}
+# Human-readable labels for each required flight field — used in clarifying questions
+_REQUIRED_FLIGHT_FIELDS: dict[str, str] = {
+    "origin":      "where you're flying from (e.g. 'Dubai' or 'DXB')",
+    "destination": "your destination (e.g. 'London' or 'LHR')",
+    "date":        "the travel date (e.g. 'October 24th' or '2026-10-24')",
+    "cabin":       "your preferred cabin class (economy, business, first, etc.)",
+    "direct":      "whether you want direct flights only, or connections are okay",
+}
+
+
+async def flight_tool(msg: str) -> ToolResult:
+    from app.services.ollama import extract_flight_params, summarise_flights
+    from app.services.flight_api import search_flights
+
+    try:
+        params = await extract_flight_params(msg)
+    except Exception as e:
+        print(f"[flight_tool] param extraction error: {e}")
+        return "text", "Sorry, I couldn't process your request. Please try again.", {}
+
+    # Check which required fields are still missing
+    missing = [f for f in _REQUIRED_FLIGHT_FIELDS if not params.get(f)]
+    if missing:
+        labels = [_REQUIRED_FLIGHT_FIELDS[f] for f in missing]
+        question = "To search for flights, I still need:\n" + "\n".join(f"• {l}" for l in labels)
+        return "text", question, {}
+
+    try:
+        flights = await search_flights(
+            origin=params["origin"],
+            destination=params["destination"],
+            date=params["date"],
+            cabin=params["cabin"],
+            adult=params.get("adult", 1),
+            infant=params.get("infant", 0),
+            children=params.get("children", 0),
+            direct=params.get("direct", "0"),
+        )
+    except Exception as e:
+        print(f"[flight_tool] search error: {e}")
+        return "text", "Sorry, I couldn't fetch flights right now. Please try again.", {}
+
+    if not flights:
+        return "text", "No flights found for that route.", {}
+
+    if "cheap" in msg.lower():
+        flights = sorted(flights, key=lambda f: float(f["price"].strip("$")))[:3]
+
+    summary = await summarise_flights(flights)
+    return "flight_page", summary, {"flights": flights}
 
 
 # intent → (tool name, callable); extend here to add new intents
